@@ -1,11 +1,15 @@
+
 ####
-# 'ArduinoBlink' Deployment:
+# Arduino Blink Deployment:
 #
-# This sets up the build for the 'ArduinoBlink' Application, including the custom
-# components. In addition, it imports FPrime.cmake, which includes the core F 
-# Prime components.
+# This sets up the Arduino Blink deployment using CMake
+# for use with F prime.
 #
-# Author: lestarch
+# This file has several sections.
+#
+# 1. Header Section: define basic properties of the build
+# 2. F´ core: includes all F´ core components, and build-system properties
+# 3. Local subdirectories: contains all deployment specific directory additions
 ####
 
 ##
@@ -13,16 +17,47 @@
 #
 # This contains the basic project information. Specifically, a cmake version and
 # project definition.
+#
+# The project name does need to take into account the path to the deployment folder,
+# if it is not at the F Prime root, e.g.: path_to_ArduinoBlink
+# not having this will confuse the `fprime-util` tool.
 ##
-project(ArduinoBlink C CXX)
-cmake_minimum_required(VERSION 3.13)
-# Must set baremetal scheduler
-set(BAREMETAL_SCHEDULER "ON")
+project(ArduinoBlink C CXX ASM)
+cmake_minimum_required(VERSION 3.5)
 
-# Include the two parts of the build system. Not needing to register separate targets
-include("${FPRIME_FRAMEWORK_PATH}/cmake/FPrime.cmake")
-include("${FPRIME_FRAMEWORK_PATH}/cmake/FPrime-Code.cmake")
-include("${CMAKE_CURRENT_LIST_DIR}/../fprime-arduino.cmake")
+set(FPRIME_FRAMEWORK_PATH "${CMAKE_CURRENT_LIST_DIR}/../fprime" CACHE PATH "Location of F prime framework" FORCE)
+set(FPRIME_PROJECT_ROOT "${CMAKE_CURRENT_LIST_DIR}/.." CACHE PATH "Root path of F prime project" FORCE)
+
+set(BAREMETAL_SCHEDULER CACHE BOOL ON "Uses the baremetal scheduler")
+
+# Use file hashes instead of full file paths in the compiled binary.  This can be
+# converted back to a filename with the `fprime-util hashes` tool.
+add_definitions(-DFW_ASSERT_LEVEL=2)
+
+# Space Saving Measures
+add_definitions(-DAssertArg=U16 -DFwPacketDescriptorType=U16 -DFwOpcodeType=U16 -DFwChanIdType=U16 -DFwEventIdType=U16 -DFwPrmIdType=U16 -DFwEnumStoreType=I32 -DFW_OBJECT_REGISTRATION=0 -DFW_QUEUE_REGISTRATION=0 -DFW_PORT_TRACING=0 -DFW_PORT_SERIALIZATION=0)
+add_definitions(-DFW_COM_BUFFER_MAX_SIZE=64 -DFW_CMD_STRING_MAX_SIZE=28 -DFW_LOG_STRING_MAX_SIZE=28 -DFW_TLM_STRING_MAX_SIZE=28 -DFW_PARAM_STRING_MAX_SIZE=28)
+
+##
+# Section 2: F´ Core
+#
+# This includes all of the F´ core components, and imports the make-system. F´ core
+# components will be placed in the F-Prime binary subdirectory to keep them from
+# colliding with deployment specific items.
+##
+include("${CMAKE_CURRENT_LIST_DIR}/../fprime/cmake/FPrime.cmake")
+# NOTE: register custom targets between these two lines
+include("${CMAKE_CURRENT_LIST_DIR}/../fprime/cmake/FPrime-Code.cmake")
+# Note: when building a deployment outside of the F´ core directories, then the
+# build root must be re-mapped for use with the standard build system components.
+#
+# In this way, the module names can be predicted as an offset from the (new) build
+# root, without breaking the standard locations of F´.
+#
+# Uncomment the following lines, and set them to the BUILD_ROOT of your deployment,
+# which is typically one directory up from the CMakeLists.txt in the deployment dir.
+set(FPRIME_CURRENT_BUILD_ROOT "${CMAKE_CURRENT_LIST_DIR}/..")
+message(STATUS "F´ BUILD_ROOT currently set to: ${FPRIME_CURRENT_BUILD_ROOT}")
 
 ##
 # Section 3: Components and Topology
@@ -31,8 +66,16 @@ include("${CMAKE_CURRENT_LIST_DIR}/../fprime-arduino.cmake")
 # core components in the topology, which is also added here.
 ##
 # Add component subdirectories
-add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/LedBlinker")
+
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../fprime-arduino/ATmega/ATmegaOs")
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../fprime-arduino/ATmega/Drv/ATmegaGpioDriver")
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../fprime-arduino/ATmega/Drv/ATmegaSerialDriver")
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../fprime-arduino/ATmega/Svc/ATmegaTime")
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../fprime-arduino/ATmega/Svc/AssertReset/")
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../fprime-arduino/ATmega/Drv/HardwareRateDriver/")
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../fprime-arduino/ATmega/Svc/EePrmDb/")
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/LedBlinker/")
 
 # Add Topology subdirectory
-add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/Top")
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/Top/")
 

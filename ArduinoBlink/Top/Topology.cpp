@@ -1,47 +1,82 @@
+#include <Components.hpp>
 #include <Fw/Types/Assert.hpp>
+#include <Os/Baremetal/TaskRunner/TaskRunner.hpp>
 #include <Os/Task.hpp>
+#include <Fw/Logger/Logger.hpp>
 #include <Os/Log.hpp>
-#include <Os/File.hpp>
 #include <Fw/Types/MallocAllocator.hpp>
-#include <ArduinoBlink/Top/ArduinoSchedContexts.hpp>
-#include "ArduinoBlink/Top/Components.hpp"
+
+
+#ifdef ARDUINO
+    #include <avr/io.h>
+#else
+    volatile uint8_t DDRB = 2;
+    volatile uint8_t PORTB = 2;
+    #define PB0 0
+    #define PB1 1
+    #define PB2 2
+    #define PB3 3
+    #define PB4 4
+    #define PB5 5
+    #define PB6 6
+    #define PB7 7
+#endif
+
+#if defined TGT_OS_TYPE_LINUX || TGT_OS_TYPE_DARWIN
+#include <getopt.h>
+#include <stdlib.h>
+#include <ctype.h>
+#endif
+
+// List of context IDs
+enum {
+    UPLINK_BUFFER_STORE_SIZE = 3000,
+    UPLINK_BUFFER_QUEUE_SIZE = 30,
+    UPLINK_BUFFER_MGR_ID = 200
+};
+
+Os::Log osLogger;
+
+
+// Registry
+#if FW_OBJECT_REGISTRATION == 1
+static Fw::SimpleObjRegistry simpleReg;
+#endif
+
+// Component instance pointers
 
 // Setup the rate group driver used to drive all the ActiveRateGroups connected to it.
 // For each active rate group, there is a rate divisor that represents how often it is run.
-static NATIVE_INT_TYPE rate_divisors[] = {1, 10};
-Svc::RateGroupDriverImpl rateGroupDriverComp(FW_OPTIONAL_NAME("RGDRV"), rate_divisors, FW_NUM_ARRAY_ELEMENTS(rate_divisors));
+static NATIVE_INT_TYPE rgDivs[] = {1, 2, 4};
+Svc::RateGroupDriverImpl rateGroupDriverComp(FW_OPTIONAL_NAME("RGDvr"),rgDivs,FW_NUM_ARRAY_ELEMENTS(rgDivs));
 
 // Context array variables are passed to rate group members if needed to distinguish one call from another
-// These context must match the rate group members connected in RPITopologyAi.xml
-static NATIVE_UINT_TYPE rg10HzContext[] = {Arduino::CONTEXT_RPI_DEMO_10Hz, 0, 0, 0};
-Svc::ActiveRateGroupImpl rateGroup10HzComp(FW_OPTIONAL_NAME("RG10Hz"),rg10HzContext,FW_NUM_ARRAY_ELEMENTS(rg10HzContext));
-static NATIVE_UINT_TYPE rg1HzContext[] = {0, 0, Arduino::CONTEXT_RPI_DEMO_1Hz, 0};
-Svc::ActiveRateGroupImpl rateGroup1HzComp(FW_OPTIONAL_NAME("RG1Hz"),rg1HzContext,FW_NUM_ARRAY_ELEMENTS(rg1HzContext));
+// These context must match the rate group members connected in ArduinoBlinkTopologyAi.xml
+static NATIVE_UINT_TYPE rg1Context[] = {0,0,0,0,0,0,0,0,0,0};
+Svc::ActiveRateGroupImpl rateGroup1Comp(FW_OPTIONAL_NAME("RG1"),rg1Context,FW_NUM_ARRAY_ELEMENTS(rg1Context));
 
-// Standard system components
-Svc::ActiveLoggerImpl eventLogger(FW_OPTIONAL_NAME("EventLogger"));
-Svc::TlmChanImpl chanTlm(FW_OPTIONAL_NAME("Telemetry"));
-Svc::CommandDispatcherImpl cmdDisp(FW_OPTIONAL_NAME("CmdDisp"));
-Svc::HealthImpl health(FW_OPTIONAL_NAME("Health"));
+// static NATIVE_UINT_TYPE rg2Context[] = {0,0,0,0,0,0,0,0,0,0};
+// Svc::ActiveRateGroupImpl rateGroup2Comp(FW_OPTIONAL_NAME("RG2"),rg2Context,FW_NUM_ARRAY_ELEMENTS(rg2Context));
 
-Svc::GroundInterfaceComponentImpl groundInterface(FW_OPTIONAL_NAME("Ground"));
+// static NATIVE_UINT_TYPE rg3Context[] = {0,0,0,0,0,0,0,0,0,0};
+// Svc::ActiveRateGroupImpl rateGroup3Comp(FW_OPTIONAL_NAME("RG3"),rg3Context,FW_NUM_ARRAY_ELEMENTS(rg3Context));
 
-// Arduino specific components
-Arduino::LedBlinkerComponentImpl ledBlinker(FW_OPTIONAL_NAME("LedBlinker"));
-Arduino::HardwareRateDriver hardwareRateDriver(FW_OPTIONAL_NAME("HardDriver"), 100);
-Arduino::SerialDriverComponentImpl comm(FW_OPTIONAL_NAME("Comm"), 1);
-Svc::ArduinoTimeImpl time(FW_OPTIONAL_NAME("Time"));
+ATmega::AssertResetComponent assertResetter(FW_OPTIONAL_NAME("assertResetter"));
+Arduino::HardwareRateDriver hardwareRateDriver(FW_OPTIONAL_NAME("hardwareRateDriver"), 100);
+Svc::CommandDispatcherImpl cmdDisp(FW_OPTIONAL_NAME("cmdDisp"));
+Svc::TlmChanImpl chanTlm(FW_OPTIONAL_NAME("chanTlm"));
+Svc::ActiveLoggerImpl eventLogger(FW_OPTIONAL_NAME("eventLogger"));
+ATmega::EePrmDbComponentImpl eePrmDb(FW_OPTIONAL_NAME("eePrmDb"));
+Svc::LinuxTimeImpl arduinoTime(FW_OPTIONAL_NAME("arduinoTime"));
+Drv::ATmegaSerialDriverComponentImpl uartDriver(FW_OPTIONAL_NAME("uartDriver"));
+Svc::GroundInterfaceComponentImpl groundInterface(FW_OPTIONAL_NAME("groundInterface"));
+Drv::ATmegaGpioDriverComponentImpl ledGpio(FW_OPTIONAL_NAME("ledGpio"));
+ArduinoBlink::LedBlinkerComponent ledBlinker(FW_OPTIONAL_NAME("ledBlinker"));
 
 // Baremetal setup for the task runner
 Os::TaskRunner taskRunner;
 
-const char* getHealthName(Fw::ObjBase& comp) {
-   #if FW_OBJECT_NAMES == 1
-       return comp.getObjName();
-   #else
-      return "";
-   #endif
-}
+
 /**
  * Construct App:
  *
@@ -49,63 +84,61 @@ const char* getHealthName(Fw::ObjBase& comp) {
  * starts tasks. This is the initialization of the application, so new tasks and
  * memory can be acquired here, but should not be created at a later point.
  */
-void constructApp() {
-    Fw::Logger::logMsg("[SETUP] Init block\n", 0, 0, 0, 0, 0, 0);
-    time.init(0);
-    // Initialize rate group driver
+void constructApp(void) {
+
+#if FW_PORT_TRACING
+    Fw::PortBase::setTrace(false);
+#endif
+
+    // Initialize each component instance in memory
+    assertResetter.init();
+    hardwareRateDriver.init(0);
     rateGroupDriverComp.init();
-    Fw::Logger::logMsg("[SETUP] RGs\n", 0, 0, 0, 0, 0, 0);
-
-    // Initialize the rate groups
-    rateGroup10HzComp.init(10, 0);
-    rateGroup1HzComp.init(10, 1);
-
-    Fw::Logger::logMsg("[SETUP] Data\n", 0, 0, 0, 0, 0, 0);
-    // Initialize the core data handling components
-    eventLogger.init(10, 0);
-    Fw::Logger::logMsg("[SETUP] Chans\n", 0, 0, 0, 0, 0, 0);
-    chanTlm.init(20, 0);
-    Fw::Logger::logMsg("[SETUP] Cmd\n", 0, 0, 0, 0, 0, 0);
-    cmdDisp.init(10,0);
-    Fw::Logger::logMsg("[SETUP] Health\n", 0, 0, 0, 0, 0, 0);
-    health.init(25,0);
-    Fw::Logger::logMsg("[SETUP] If\n", 0, 0, 0, 0, 0, 0);
+    rateGroup1Comp.init(10, 0);
+    cmdDisp.init(2, 0);
+    chanTlm.init(4, 0);
+    eventLogger.init(4, 0);
+    eePrmDb.init(0, 32, 1024);
+    arduinoTime.init(0);
+    uartDriver.init(0);
     groundInterface.init(0);
-    Fw::Logger::logMsg("[SETUP] Blinker\n", 0, 0, 0, 0, 0, 0);
+    ledGpio.init(0);
     ledBlinker.init(0);
-    Fw::Logger::logMsg("[SETUP] Comm\n", 0, 0, 0, 0, 0, 0);
-    comm.init(0, 115200);
-    Fw::Logger::logMsg("[SETUP] Architecture\n", 0, 0, 0, 0, 0, 0);
+
+    Fw::Logger::logMsg("Constructing Architecture.\n");
 
     // Callback to initialize architecture, connect ports, etc.
-    constructArduinoArchitecture();
-    Fw::Logger::logMsg("[SETUP] Command reg\n", 0, 0, 0, 0, 0, 0);
+    // The contents of the function are autocoded from the
+    // ArduinoBlinkTopologyAppAi.xml, and
+    // incorporates the assembly name.
+    constructArduinoBlinkArchitecture();
 
-    // Register all commands into the system
+    /* Register commands */
     cmdDisp.regCommands();
     eventLogger.regCommands();
-    health.regCommands();
 
-    // Setup the health an ping entries. These need to be in the same order as the
-    // ports connected to the health component. Once the ping entry array is created
-    // pass it into the ping-entries array.
-    Svc::HealthImpl::PingEntry pingEntries[] = {
-        {3, 5, getHealthName(rateGroup10HzComp)},
-        {3, 5, getHealthName(rateGroup1HzComp)},
-        {3, 5, getHealthName(cmdDisp)},
-        {3, 5, getHealthName(chanTlm)},
-        {3, 5, getHealthName(eventLogger)}
-    };
-    health.setPingEntries(pingEntries,FW_NUM_ARRAY_ELEMENTS(pingEntries),0x123);
-    Fw::Logger::logMsg("[SETUP] Start\n", 0, 0, 0, 0, 0, 0);
-    hardwareRateDriver.start();
-    // Start all active components' tasks thus finishing the setup portion of this code
-    rateGroup10HzComp.start(0, 120, 10 * 1024);
-    rateGroup1HzComp.start(0, 119, 10 * 1024);
-    cmdDisp.start(0, 101, 10 * 1024);
-    eventLogger.start(0, 98, 10 * 1024);
-    chanTlm.start(0, 97, 10 * 1024);
+    // read parameters
+    ledBlinker.loadParameters();
+
+
+    // Configure hardware
+    uartDriver.open(Drv::ATmegaSerialDriverComponentImpl::DEVICE::USART0,
+                    Drv::ATmegaSerialDriverComponentImpl::BAUD_RATE::BAUD_115K,
+                    Drv::ATmegaSerialDriverComponentImpl::PARITY::PARITY_NONE);
+    ledGpio.setup(DDRB, PORTB, PB5, Drv::ATmegaGpioDriverComponentImpl::GPIO_OUT);
+
+    // Active component startup
+    //   The .start() function has the following arguments:
+    //    1. Thread ID, unique value for each thread, not used for Linux or Baremetal
+    //    2. Thread Priority, passed to underlying OS
+    //    3. Thread Stack Size, passed to underlying OS, not used for Baremetal
+    rateGroup1Comp.start(0, 100, 10*1024);
+    cmdDisp.start(1, 99, 10*1024);
+    chanTlm.start(2, 98, 10*1024);
+    eventLogger.start(3, 97, 10*1024);
+
 }
+
 /**
  * Exit Tasks:
  *
@@ -114,9 +147,9 @@ void constructApp() {
  * for completeness.
  */
 void exitTasks(void) {
-    rateGroup1HzComp.exit();
-    rateGroup10HzComp.exit();
+    rateGroup1Comp.exit();
     cmdDisp.exit();
-    eventLogger.exit();
     chanTlm.exit();
+    eventLogger.exit();
+
 }

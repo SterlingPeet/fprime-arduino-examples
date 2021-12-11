@@ -1,0 +1,52 @@
+# This file exists so you can easily regenerate your project.
+#
+# `cookiepatcher` is a convenient shim around `cookiecutter`
+# for regenerating projects (it will generate a .cookiecutterrc
+# automatically for any template). To use it:
+#
+#    pip install cookiepatcher
+#    cookiepatcher gh:sterlingpeet/cookiecutter-fprime-deployment ArduinoBlink
+#
+# See:
+#    https://pypi.org/project/cookiepatcher
+#
+# Alternatively, you can run:
+#
+#    cookiecutter --overwrite-if-exists --config-file=ArduinoBlink/.cookiecutterrc gh:sterlingpeet/cookiecutter-fprime-deployment
+
+default_context:
+
+    _template:                 '../cookiecutter-fprime-deployment'
+    arduino_log_stream:        'Serial'
+    component_dir_name:        'LedBlinker'
+    component_explicit_common: ''
+    component_explicit_component_suffix: 'Component'
+    component_impl_suffix:     ''
+    component_instance_name:   'ledBlinker'
+    component_kind:            'passive'
+    component_multiplatform_support: 'yes'
+    component_name:            'Led Blinker'
+    component_namespace:       'ArduinoBlink'
+    component_path_to_fprime_root: '../..'
+    component_short_description: 'Example component to support Arduino Blink deployment.'
+    component_slug:            'LedBlinker'
+    dep_short_description:     'Example deployment for F Prime FSW framework using the Arduino platform.'
+    deployment_baremetal_scheduler: 'yes'
+    deployment_command_sequence_support: 'no'
+    deployment_display_name:   'Arduino Blink'
+    deployment_event_text_log_support: 'no'
+    deployment_file_xfer_support: 'no'
+    deployment_health_support: 'no'
+    deployment_parameter_support: 'yes'
+    deployment_path:           '.'
+    deployment_path_to_fprime_framework: '../fprime'
+    deployment_path_to_project_root: '..'
+    deployment_ref_doc_boilerplate: 'no'
+    deployment_rg_sched_contexts_hpp: 'no'
+    deployment_slug:           'ArduinoBlink'
+    deployment_target_platform_support: 'Arduino'
+    email:                     'sterling.peet@ae.gatech.edu'
+    full_name:                 'Sterling Peet'
+    license:                   'Apache 2.0 license'
+    startup_arduino_led_flash: 'yes'
+    startup_delay_msec:        '2000'

@@ -1,44 +1,95 @@
 #include <ArduinoBlink/Top/Components.hpp>
-#include <fprime-arduino/ArduinoTypes/GenericLogAssert.hpp>
+#include <Fw/Logger/Logger.hpp>
 #include <Os/Log.hpp>
 #ifdef ARDUINO
-    #include <fprime-arduino/ArduinoOs/StreamLog.hpp>
+    #include <ATmega/ATmegaOs/Arduino/StreamLog.hpp>
     #include <Arduino.h>
-#else
-    #include <fprime-arduino/ArduinoDrv/SerialDriver/SerialDriver.hpp>
+    #include <ATmega/ATmegaOs/AVR/XMem.hpp>
 #endif
-
-// Global handlers for this Topology
-Fw::LogAssertHook assert;
 
 #define STARTUP_DELAY_MS 2000
 
+#if defined (DEBUG_TOP_FREE_RAM) || defined (DEBUG_TOP_SETUP)
+    #ifdef ARDUINO
+        // #include <Arduino.h>
+        #include <ATmega/vendor/libraries/MemoryFree/MemoryFree.h>
+    #endif
+    #ifndef DEBUG_Serial
+        #define DEBUG_Serial Serial
+    #endif
+#endif
+
 /**
- * Main function.
+ * In a production deployment, the following version definitions should
+ * be kept in a component that can telemeter the values on-demand, and
+ * those definitions can be used directly in the logMsg call rather than
+ * being re-defined below.
+ */
+#define ARDUINOBLINK_VERSION_MAJOR 0
+#define ARDUINOBLINK_VERSION_MINOR 0
+#define ARDUINOBLINK_VERSION_PATCH 1
+
+/**
+ * Main function for Arduino Blink Deployment executable.
  */
 int main(int argc, char* argv[]) {
-    Os::Log logger;
-    assert.registerHook();
 #ifdef ARDUINO
-    // Start Serial for logging, and give logger time to connect
-    Serial.begin(9600);
-    delay(STARTUP_DELAY_MS);
-    // Setup log handler
-    Os::setArduinoStreamLogHandler(&Serial);
-    Fw::Logger::logMsg("[SETUP] Logger registered, hello world!\n", 0, 0, 0, 0, 0, 0);
-#else
-    // Set serial port
-    FW_ASSERT(argc <= 2);
-    if (argc == 2) {
-        Arduino::SERIAL_PORT = reinterpret_cast<char**>(&argv[1]);
-    }
+    init();
 #endif
-    Fw::Logger::logMsg("[SETUP] Constructing system\n", 0, 0, 0, 0, 0, 0);
+
+#ifdef ARDUINO
+    #ifndef LOG_Serial
+        #ifndef DEBUG_Serial
+            #define LOG_Serial Serial
+        #else
+            #define LOG_Serial DEBUG_Serial
+        #endif
+    #endif
+
+    LOG_Serial.begin(115200);
+    Os::setArduinoStreamLogHandler(&LOG_Serial);
+#endif
+    Os::Log logger;
+
+#ifndef RELEASE_BUILD
+    Fw::Logger::logMsg("\r\nArduinoBlink Version %d.%d.%d-devel\r\n",
+                       ARDUINOBLINK_VERSION_MAJOR,
+                       ARDUINOBLINK_VERSION_MINOR,
+                       ARDUINOBLINK_VERSION_PATCH);
+#else
+    Fw::Logger::logMsg("\r\nArduinoBlink Version %d.%d.%d\r\n",
+                       ARDUINOBLINK_VERSION_MAJOR,
+                       ARDUINOBLINK_VERSION_MINOR,
+                       ARDUINOBLINK_VERSION_PATCH);
+#endif
+    delay(2000);
+
+#ifdef ARDUINO
+    // Two quick flashes for viz indication
+    pinMode(13, OUTPUT);
+    digitalWrite(13, HIGH);
+    delay(100);
+    digitalWrite(13, LOW);
+    delay(100);
+    digitalWrite(13, HIGH);
+    delay(100);
+    digitalWrite(13, LOW);
+    delay(600);
+#endif
+
+#ifdef DEBUG_TOP_FREE_RAM
+    #ifdef ARDUINO
+    DEBUG_Serial.print("\nFree RAM: ");
+    DEBUG_Serial.println(freeMemory());
+    #endif
+#endif
+
     constructApp();
-    Fw::Logger::logMsg("[SETUP] Lanuching rate groups\n", 0, 0, 0, 0, 0, 0);
-    // Start the task for the rate group
-    while (1) {
-        taskRunner.run();
-    }
+
+#ifndef ARDUINO
+    (void) printf("Starting TaskRunner.\n");
+#endif
+    while(1){taskRunner.run();}
+
     return 0;
 }
