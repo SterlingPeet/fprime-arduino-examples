@@ -12,10 +12,6 @@
 #ifndef _FW_CONFIG_HPP_
 #define _FW_CONFIG_HPP_
 
-// A helper macro to declare errors in definitions of the constants
-#define FW_CONFIG_ERROR( condition, name )\
-    typedef char assert_failed_ ## name [ (condition) ? 1 : -1 ];
-
 // To enable various facilities, set the below to 0 or 1. If it is set in compiler flags,
 // these defaults will be overridden
 
@@ -67,11 +63,15 @@
 #endif
 
 #ifndef FwEventIdType
-#define FwEventIdType U32                   //!< Type representation for a event id
+#define FwEventIdType U32                   //!< Type representation for an event id
 #endif
 
 #ifndef FwPrmIdType
 #define FwPrmIdType U32                     //!< Type representation for a parameter id
+#endif
+
+#ifndef FwTlmPacketizeIdType
+#define FwTlmPacketizeIdType U16            //!< Packetized telemetry packet id
 #endif
 
 // How big the size of a buffer (or string) representation is
@@ -88,18 +88,16 @@
 
 // Allow objects to have names. Allocates storage for each instance
 #ifndef FW_OBJECT_NAMES
-#define FW_OBJECT_NAMES                     0   //!< Indicates whether or not object names are stored (more memory, can be used for tracking objects)
+#define FW_OBJECT_NAMES                     1   //!< Indicates whether or not object names are stored (more memory, can be used for tracking objects)
 #endif
 
-// To reduce binary size, FW_OPTIONAL_NAME(<string>) can be used to subsitute strings with an empty string
+// To reduce binary size, FW_OPTIONAL_NAME(<string>) can be used to substitute strings with an empty string
 // when running with FW_OBJECT_NAMES disabled
 #if FW_OBJECT_NAMES == 1
  #define FW_OPTIONAL_NAME(name) name
 #else
  #define FW_OPTIONAL_NAME(name) ""
 #endif
-
-// Add methods to query an object about its name. Can be overridden by derived classes
 
 // Add methods to query an object about its name. Can be overridden by derived classes
 // For FW_OBJECT_TO_STRING to work, FW_OBJECT_NAMES must be enabled
@@ -114,22 +112,22 @@
 // Adds the ability for all component related objects to register
 // centrally.
 #ifndef FW_OBJECT_REGISTRATION
-#define FW_OBJECT_REGISTRATION              0   //!< Indicates whether or not objects can register themselves (more code, more object tracking)
+#define FW_OBJECT_REGISTRATION              1   //!< Indicates whether or not objects can register themselves (more code, more object tracking)
 #endif
 
 #ifndef FW_QUEUE_REGISTRATION
-#define FW_QUEUE_REGISTRATION               0   //!< Indicates whether or not queue registration is used
+#define FW_QUEUE_REGISTRATION               1   //!< Indicates whether or not queue registration is used
 #endif
 
 #ifndef FW_BAREMETAL_SCHEDULER
-#define FW_BAREMETAL_SCHEDULER             1   //!< Indicates whether or not a baremetal scheduler should be used. Alternatively the Os scheduler is used.
+#define FW_BAREMETAL_SCHEDULER             0   //!< Indicates whether or not a baremetal scheduler should be used. Alternatively the Os scheduler is used.
 #endif
 
 // Port Facilities
 
 // This allows tracing calls through ports for debugging
 #ifndef FW_PORT_TRACING
-#define FW_PORT_TRACING                     0   //!< Indicates whether port calls are traced (more code, more visibility into execution)
+#define FW_PORT_TRACING                     1   //!< Indicates whether port calls are traced (more code, more visibility into execution)
 #endif
 
 // This generates code to connect to serialized ports
@@ -160,8 +158,9 @@
 // Turn asserts on or off
 
 #define FW_NO_ASSERT                        1   //!< Asserts turned off
-#define FW_FILEID_ASSERT                    2   //!< File ID used - requires -DASSERT_FILE_ID=<somevalue> to be set on the compile command line
+#define FW_FILEID_ASSERT                    2   //!< File ID used - requires -DASSERT_FILE_ID=somevalue to be set on the compile command line
 #define FW_FILENAME_ASSERT                  3   //!< Uses the file name in the assert - image stores filenames
+#define FW_ASSERT_DFL_MSG_LEN               256 //!< Maximum assert message length when using the default assert handler
 
 #ifndef FW_ASSERT_LEVEL
 #define FW_ASSERT_LEVEL                     FW_FILENAME_ASSERT //!< Defines the type of assert used
@@ -195,7 +194,7 @@
  #endif
 // When dumping the contents of the registry, this specifies the size of the buffer used to store object names. Should be >= FW_OBJ_NAME_MAX_SIZE.
  #ifndef FW_OBJ_SIMPLE_REG_BUFF_SIZE
- #define FW_OBJ_SIMPLE_REG_BUFF_SIZE         255  //!< Size of ojbect registry dump string
+ #define FW_OBJ_SIMPLE_REG_BUFF_SIZE         255  //!< Size of object registry dump string
  #endif
 #endif
 
@@ -233,7 +232,7 @@
 #define FW_CMD_STRING_MAX_SIZE           40   //!< Max character size of command string arguments
 #endif
 
-// Normally when a command is deserialized, the handler checks to see if there any any leftover
+// Normally when a command is deserialized, the handler checks to see if there are any leftover
 // bytes in the buffer. If there are, it assumes that the command was corrupted somehow since
 // the serialized size should match the serialized size of the argument list. In some cases,
 // command buffers are padded so the data can be larger than the serialized size of the command.
@@ -339,7 +338,7 @@ enum TimeBase {
 #define FW_CONTEXT_DONT_CARE 0xFF                 //!< Don't care value for time contexts in sequences
 #endif
 
-// These setting configure whether or not the timebase and context values for the Fw::Time
+// These settings configure whether or not the timebase and context values for the Fw::Time
 // class are used. Some systems may not use or need those fields
 
 #ifndef FW_USE_TIME_BASE
@@ -348,6 +347,12 @@ enum TimeBase {
 
 #ifndef FW_USE_TIME_CONTEXT
 #define FW_USE_TIME_CONTEXT             1 //!< Whether or not to serialize the time context
+#endif
+//
+//These defines used for the FilepathCharString type
+
+#ifndef FW_FIXED_LENGTH_STRING_SIZE
+#define FW_FIXED_LENGTH_STRING_SIZE   256 //!< Character array size for the filepath character type
 #endif
 
 // *** NOTE configuration checks are in Fw/Cfg/ConfigCheck.cpp in order to have
