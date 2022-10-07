@@ -19,8 +19,8 @@ set(MOD_DEPS
 )
 
 register_fprime_executable()
-if(${CMAKE_SYSTEM_NAME} STREQUAL "Arduino")
-    set(ARDUINO_DEPENDENCY_TARGET_TOP "${PROJECT_NAME}")
-    add_arduino_dependency("${PROJECT_NAME}_exe")
-    unset(ARDUINO_DEPENDENCY_TARGET_TOP)
-endif()
+#if(${CMAKE_SYSTEM_NAME} STREQUAL "Arduino")
+#    set(ARDUINO_DEPENDENCY_TARGET_TOP "${PROJECT_NAME}")
+#    add_arduino_dependency("${PROJECT_NAME}_exe")
+#    unset(ARDUINO_DEPENDENCY_TARGET_TOP)
+#endif()
