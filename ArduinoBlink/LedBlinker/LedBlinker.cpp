@@ -14,15 +14,10 @@ namespace ArduinoBlink {
   // Construction, initialization, and destruction
   // ----------------------------------------------------------------------
 
-  LedBlinkerComponent ::
-#if FW_OBJECT_NAMES == 1
-    LedBlinkerComponent(
+  LedBlinkerComponent :: LedBlinkerComponent(
         const char *const compName
     ) :
       LedBlinkerComponentBase(compName),
-#else
-    LedBlinkerComponent(void) :
-#endif
     m_state(false),
     m_blinks(0),
     m_blinkDecimateCntrl(0)

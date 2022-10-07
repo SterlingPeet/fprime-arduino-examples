@@ -6,25 +6,15 @@
 #
 ####
 set(SOURCE_FILES
-    "${CMAKE_CURRENT_LIST_DIR}/LedBlinkerComponentAi.xml"
-    "${CMAKE_CURRENT_LIST_DIR}/LedBlinkerComponent.cpp"
+    "${CMAKE_CURRENT_LIST_DIR}/LedBlinker.fpp"
+    "${CMAKE_CURRENT_LIST_DIR}/LedBlinker.cpp"
 )
 
-# Determine the platform specific source files to append:
-string(TOLOWER "${CMAKE_SYSTEM_NAME}" CMAKE_SYSTEM_NAME_LOWER)
-
 # Arduino additions
-if(${CMAKE_SYSTEM_NAME_LOWER} STREQUAL "arduino")
-    list(APPEND SOURCE_FILES "${CMAKE_CURRENT_LIST_DIR}/LedBlinkerComponentArduino.cpp")
+if(FPRIME_ARDUINO)
+    list(APPEND SOURCE_FILES "${CMAKE_CURRENT_LIST_DIR}/LedBlinkerArduino.cpp")
 else()
-    list(APPEND SOURCE_FILES "${CMAKE_CURRENT_LIST_DIR}/LedBlinkerComponentLinux.cpp")
+    list(APPEND SOURCE_FILES "${CMAKE_CURRENT_LIST_DIR}/LedBlinkerLinux.cpp")
 endif()
 
 register_fprime_module()
-
-
-# Add Arduino dependency
-if(${CMAKE_SYSTEM_NAME_LOWER} STREQUAL "arduino")
-    get_module_name(${CMAKE_CURRENT_LIST_DIR})
-    add_arduino_dependency("${MODULE_NAME}")
-endif()

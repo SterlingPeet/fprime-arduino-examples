@@ -4,14 +4,14 @@
 // \brief  Example component to support Arduino Blink deployment.
 // ======================================================================
 
-#ifndef LedBlinkerComponent_HPP
-#define LedBlinkerComponent_HPP
+#ifndef ARDUINO_LedBlinkerComponent_HPP
+#define ARDUINO_LedBlinkerComponent_HPP
 
 #include "ArduinoBlink/LedBlinker/LedBlinkerComponentAc.hpp"
 
 namespace ArduinoBlink {
 
-  class LedBlinkerComponent :
+  class LedBlinker :
     public LedBlinkerComponentBase
   {
 
@@ -24,11 +24,7 @@ namespace ArduinoBlink {
       //! Construct object LedBlinkerComponent
       //!
       LedBlinkerComponent(
-#if FW_OBJECT_NAMES == 1
           const char *const compName /*!< The component name*/
-#else
-          void
-#endif
       );
 
       //! Initialize object LedBlinkerComponent
@@ -39,7 +35,7 @@ namespace ArduinoBlink {
 
       //! Destroy object LedBlinkerComponent
       //!
-      ~LedBlinkerComponent(void);
+      ~LedBlinker(void);
 
     PRIVATE:
       // ----------------------------------------------------------------------
