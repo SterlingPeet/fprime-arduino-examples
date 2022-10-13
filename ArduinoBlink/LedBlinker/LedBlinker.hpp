@@ -1,11 +1,11 @@
 // ======================================================================
-// \title  LedBlinkerComponent.hpp
+// \title  LedBlinker.hpp
 // \author Sterling Peet <sterling.peet@ae.gatech.edu>
 // \brief  Example component to support Arduino Blink deployment.
 // ======================================================================
 
-#ifndef ARDUINO_LedBlinkerComponent_HPP
-#define ARDUINO_LedBlinkerComponent_HPP
+#ifndef ARDUINO_LedBlinker_HPP
+#define ARDUINO_LedBlinker_HPP
 
 #include "ArduinoBlink/LedBlinker/LedBlinkerComponentAc.hpp"
 
@@ -21,19 +21,19 @@ namespace ArduinoBlink {
       // Construction, initialization, and destruction
       // ----------------------------------------------------------------------
 
-      //! Construct object LedBlinkerComponent
+      //! Construct object LedBlinker
       //!
-      LedBlinkerComponent(
+      LedBlinker(
           const char *const compName /*!< The component name*/
       );
 
-      //! Initialize object LedBlinkerComponent
+      //! Initialize object LedBlinker
       //!
       void init(
           const NATIVE_INT_TYPE instance = 0 /*!< The instance number*/
       );
 
-      //! Destroy object LedBlinkerComponent
+      //! Destroy object LedBlinker
       //!
       ~LedBlinker(void);
 
@@ -57,7 +57,7 @@ namespace ArduinoBlink {
 
       //! Handler implementation for schedIn
       //!
-      void schedIn_handler(
+      void run_handler(
           const NATIVE_INT_TYPE portNum, /*!< The port number*/
           NATIVE_UINT_TYPE context /*!< The call order*/
       );
@@ -72,4 +72,4 @@ namespace ArduinoBlink {
 
 } // end namespace ArduinoBlink
 
-#endif // end LedBlinkerComponent_HPP
+#endif // end LedBlinker_HPP

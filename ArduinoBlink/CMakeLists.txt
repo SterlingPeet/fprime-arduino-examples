@@ -37,6 +37,12 @@ include("${FPRIME_FRAMEWORK_PATH}/cmake/FPrime-Code.cmake")
 #add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../fprime-arduino/ATmega/Drv/HardwareRateDriver/")
 #add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/../fprime-arduino/ATmega/Svc/EePrmDb/")
 add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/LedBlinker/")
+add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/Top/")
+
+set(SOURCE_FILES "${CMAKE_CURRENT_LIST_DIR}/Main.cpp")
+set(MOD_DEPS ArduinoBlink/Top)
+
+register_fprime_deployment()
 
 # Add Topology subdirectory
 #add_fprime_subdirectory("${CMAKE_CURRENT_LIST_DIR}/Top/")

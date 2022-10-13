@@ -1,11 +1,11 @@
 // ======================================================================
-// \title  LedBlinkerComponent.cpp
+// \title  LedBlinker.cpp
 // \author Sterling Peet <sterling.peet@ae.gatech.edu>
 // \brief  Example component to support Arduino Blink deployment.
 // ======================================================================
 
 
-#include <ArduinoBlink/LedBlinker/LedBlinkerComponent.hpp>
+#include <ArduinoBlink/LedBlinker/LedBlinker.hpp>
 #include "Fw/Types/BasicTypes.hpp"
 
 namespace ArduinoBlink {
@@ -14,7 +14,7 @@ namespace ArduinoBlink {
   // Construction, initialization, and destruction
   // ----------------------------------------------------------------------
 
-  LedBlinkerComponent :: LedBlinkerComponent(
+  LedBlinker :: LedBlinker(
         const char *const compName
     ) :
       LedBlinkerComponentBase(compName),
@@ -23,18 +23,32 @@ namespace ArduinoBlink {
     m_blinkDecimateCntrl(0)
   {}
 
-  LedBlinkerComponent ::
-    ~LedBlinkerComponent(void)
+  LedBlinker ::
+    ~LedBlinker(void)
   {
 
+  }
+  
+  void LedBlinker ::
+    init(
+        const NATIVE_INT_TYPE instance
+    )
+  {
+    LedBlinkerComponentBase::init(instance);
+  }
+
+  void LedBlinker ::
+    blink()
+  {
+      this->gpio_out(0, (m_state) ? Fw::Logic::HIGH : Fw::Logic::LOW);
   }
 
   // ----------------------------------------------------------------------
   // Handler implementations for user-defined typed input ports
   // ----------------------------------------------------------------------
 
-  void LedBlinkerComponent ::
-    schedIn_handler(
+  void LedBlinker ::
+    run_handler(
         const NATIVE_INT_TYPE portNum,
         NATIVE_UINT_TYPE context
     )
@@ -60,7 +74,7 @@ namespace ArduinoBlink {
   // Command handler implementations
   // ----------------------------------------------------------------------
 
-  void LedBlinkerComponent ::
+  void LedBlinker ::
     downlinkParams_cmdHandler(
         const FwOpcodeType opCode,
         const U32 cmdSeq
@@ -69,10 +83,10 @@ namespace ArduinoBlink {
     Fw::ParamValid valid;
     U8 val1 = this->paramGet_blinkDecimate(valid);
     this->tlmWrite_blinkDecimate(val1);
-    this->cmdResponse_out(opCode,cmdSeq,Fw::COMMAND_OK);
+    this->cmdResponse_out(opCode,cmdSeq,Fw::CmdResponse::OK);
   }
 
-  void LedBlinkerComponent ::
+  void LedBlinker ::
     parameterUpdated(
         FwPrmIdType id
     )

@@ -11,10 +11,10 @@ set(SOURCE_FILES
 )
 
 # Arduino additions
-if(FPRIME_ARDUINO)
-    list(APPEND SOURCE_FILES "${CMAKE_CURRENT_LIST_DIR}/LedBlinkerArduino.cpp")
-else()
-    list(APPEND SOURCE_FILES "${CMAKE_CURRENT_LIST_DIR}/LedBlinkerLinux.cpp")
-endif()
+#if(FPRIME_ARDUINO)
+#    list(APPEND SOURCE_FILES "${CMAKE_CURRENT_LIST_DIR}/LedBlinkerArduino.cpp")
+#else()
+#    list(APPEND SOURCE_FILES "${CMAKE_CURRENT_LIST_DIR}/LedBlinkerLinux.cpp")
+#endif()
 
 register_fprime_module()
