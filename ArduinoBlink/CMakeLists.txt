@@ -14,6 +14,7 @@ project(ArduinoBlink C CXX ASM)
 cmake_minimum_required(VERSION 3.16)
 set(BAREMETAL_SCHEDULER CACHE BOOL ON "Uses the baremetal scheduler")
 
+message(STATUS ">>>>>${CMAKE_SYSTEM_PROCESSOR}")
 
 include("${FPRIME_FRAMEWORK_PATH}/cmake/FPrime.cmake")
 

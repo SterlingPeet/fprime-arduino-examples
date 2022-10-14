@@ -32,7 +32,6 @@ module ArduinoBlink {
     instance staticMemory
     instance textLogger
     instance uplink
-    instance systemResources
     instance ledPin
     instance rateDriver
     instance blinker

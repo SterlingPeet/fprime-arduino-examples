@@ -138,8 +138,6 @@ module ArduinoBlink {
 
   }
 
-  instance systemResources: Svc.SystemResources base id 0x4B00
-
   instance rateDriver: Arduino.HardwareRateDriver base id 0x4900
 
   instance ledPin: Arduino.GpioDriver base id 0x5000
