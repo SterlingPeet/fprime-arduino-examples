@@ -79,7 +79,7 @@ module ArduinoBlink {
       # Rate group 1
       rgDriver.CycleOut[Ports_RateGroups.rg1] -> rg1.CycleIn
       rg1.RateGroupMemberOut[0] -> chanTlm.Run
-      rg1.RateGroupMemberOut[1] -> systemResources.run
+      #rg1.RateGroupMemberOut[1] -> systemResources.run
       rg1.RateGroupMemberOut[2] -> blinker.run
     }
 
