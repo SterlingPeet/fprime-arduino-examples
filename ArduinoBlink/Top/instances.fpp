@@ -52,9 +52,8 @@ module ArduinoBlink {
   # ----------------------------------------------------------------------
 
   @ Communications driver. May be swapped with other comm drivers like UART
-  @ Note: Here we have TCP reliable uplink and UDP (low latency) downlink
   instance comm: Drv.ByteStreamDriverModel base id 0x4000 \
-    type "Arduino::SerialDriver" \
+    type "Arduino::SerialDriverComponentImpl" \
     at "../../Arduino/Drv/SerialDriver/SerialDriver.hpp" \
   {
 
