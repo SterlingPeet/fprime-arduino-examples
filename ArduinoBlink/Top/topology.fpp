@@ -10,7 +10,6 @@ module ArduinoBlink {
 
     enum Ports_StaticMemory {
       downlink
-      uplink
     }
 
   topology ArduinoBlink {
@@ -79,14 +78,13 @@ module ArduinoBlink {
       # Rate group 1
       rgDriver.CycleOut[Ports_RateGroups.rg1] -> rg1.CycleIn
       rg1.RateGroupMemberOut[0] -> chanTlm.Run
-      #rg1.RateGroupMemberOut[1] -> systemResources.run
-      rg1.RateGroupMemberOut[2] -> blinker.run
+      rg1.RateGroupMemberOut[1] -> blinker.run
     }
 
     connections Uplink {
-      comm.allocate -> staticMemory.bufferAllocate[Ports_StaticMemory.uplink]
+      #comm.allocate -> staticMemory.bufferAllocate[Ports_StaticMemory.uplink]
       comm.$recv -> uplink.framedIn
-      uplink.framedDeallocate -> staticMemory.bufferDeallocate[Ports_StaticMemory.uplink]
+      uplink.framedDeallocate -> comm.recvReturn
 
       uplink.comOut -> cmdDisp.seqCmdBuff
       cmdDisp.seqCmdStatus -> uplink.cmdResponseIn

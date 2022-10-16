@@ -24,7 +24,7 @@ module ArduinoBlink {
     """
 
     phase Fpp.ToCpp.Phases.configComponents """
-    rateGroup1Comp.configure(
+    rg1.configure(
         ConfigObjects::rg1::context,
         FW_NUM_ARRAY_ELEMENTS(ConfigObjects::rg1::context)
     );
@@ -52,38 +52,11 @@ module ArduinoBlink {
   # ----------------------------------------------------------------------
 
   @ Communications driver. May be swapped with other comm drivers like UART
-  instance comm: Drv.ByteStreamDriverModel base id 0x4000 \
-    type "Arduino::SerialDriverComponentImpl" \
-    at "../../Arduino/Drv/SerialDriver/SerialDriver.hpp" \
+  instance comm: Arduino.SerialDriver base id 0x4000 \
   {
-
-    phase Fpp.ToCpp.Phases.configConstants """
-    enum {
-      PRIORITY = 100,
-      STACK_SIZE = Default::stackSize
-    };
-    """
-
     phase Fpp.ToCpp.Phases.startTasks """
-    // Initialize socket server if and only if there is a valid specification
-    if (state.hostName != nullptr && state.portNumber != 0) {
-        Os::TaskString name("ReceiveTask");
-        // Uplink is configured for receive so a socket task is started
-        comm.configure(state.hostName, state.portNumber);
-        comm.startSocketTask(
-            name,
-            true,
-            ConfigConstants::comm::PRIORITY,
-            ConfigConstants::comm::STACK_SIZE
-        );
-    }
+    comm.configure(0, 9600);
     """
-
-    phase Fpp.ToCpp.Phases.freeThreads """
-    comm.stopSocketTask();
-    (void) comm.joinSocketTask(nullptr);
-    """
-
   }
 
   instance downlink: Svc.Framer base id 0x4100 {
@@ -137,9 +110,11 @@ module ArduinoBlink {
 
   }
 
-  instance rateDriver: HardwareRateDriver.HardwareRateDriver base id 0x4900 \
-    type "HardwareRateDriver::HardwareRateDriver" \
-    at "../../Arduino/Drv/HardwareRateDriver/HardwareRateDriver.hpp" \
+  instance rateDriver: Arduino.HardwareRateDriver base id 0x4900
+ 
+  # \
+  #    type "HardwareRateDriver::HardwareRateDriver" \
+  #    at "../../Arduino/Drv/HardwareRateDriver/HardwareRateDriver.hpp" \
   
 
   instance ledPin: Arduino.GpioDriver base id 0x5000
