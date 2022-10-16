@@ -137,7 +137,10 @@ module ArduinoBlink {
 
   }
 
-  instance rateDriver: Arduino.HardwareRateDriver base id 0x4900
+  instance rateDriver: HardwareRateDriver.HardwareRateDriver base id 0x4900 \
+    type "HardwareRateDriver::HardwareRateDriver" \
+    at "../../Arduino/Drv/HardwareRateDriver/HardwareRateDriver.hpp" \
+  
 
   instance ledPin: Arduino.GpioDriver base id 0x5000
   instance blinker: ArduinoBlink.LedBlinker base id 0x5100
