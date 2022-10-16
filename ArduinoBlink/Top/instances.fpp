@@ -104,7 +104,7 @@ module ArduinoBlink {
   instance fatalHandler: Svc.FatalHandler base id 0x4300
 
   instance arduinoTime: Svc.Time base id 0x4500 \
-      type "Arduino::ArduinoTime" \
+      type "Svc::ArduinoTimeImpl" \
       at "../../Arduino/ArduinoTime/ArduinoTimeImpl.hpp"
 
   instance rgDriver: Svc.RateGroupDriver base id 0x4600 {
