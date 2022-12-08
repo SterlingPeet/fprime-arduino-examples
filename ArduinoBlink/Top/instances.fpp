@@ -54,8 +54,8 @@ module ArduinoBlink {
   @ Communications driver. May be swapped with other comm drivers like UART
   instance comm: Arduino.SerialDriver base id 0x4000 \
   {
-    phase Fpp.ToCpp.Phases.startTasks """
-    comm.configure(0, 9600);
+    phase Fpp.ToCpp.Phases.configComponents """
+    //comm.configure(0, 9600);
     """
   }
 
@@ -110,13 +110,26 @@ module ArduinoBlink {
 
   }
 
-  instance rateDriver: Arduino.HardwareRateDriver base id 0x4900
- 
-  # \
-  #    type "HardwareRateDriver::HardwareRateDriver" \
-  #    at "../../Arduino/Drv/HardwareRateDriver/HardwareRateDriver.hpp" \
+  instance rateDriver: Arduino.HardwareRateDriver base id 0x4900 \
+  {
+    phase Fpp.ToCpp.Phases.configComponents """
+    rateDriver.configure(100);
+    """
+    phase Fpp.ToCpp.Phases.startTasks """
+    rateDriver.start();
+    """
+  } 
   
 
-  instance ledPin: Arduino.GpioDriver base id 0x5000
-  instance blinker: ArduinoBlink.LedBlinker base id 0x5100
+  instance ledPin: Arduino.GpioDriver base id 0x5000 {
+      phase Fpp.ToCpp.Phases.configComponents """
+      (void) ledPin.open(13, Arduino::GpioDriver::OUT);
+      """
+
+  }
+  instance blinker: ArduinoBlink.LedBlinker base id 0x5100 {
+      phase Fpp.ToCpp.Phases.loadParameters """
+      """
+
+  }
 }

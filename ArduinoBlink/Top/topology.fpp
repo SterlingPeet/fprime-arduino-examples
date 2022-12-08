@@ -73,12 +73,12 @@ module ArduinoBlink {
     connections RateGroups {
       # Block driver
       rateDriver.CycleOut -> rgDriver.CycleIn
-      rateDriver.error -> ledPin.gpioWrite
+      #rateDriver.error -> ledPin.gpioWrite
 
       # Rate group 1
       rgDriver.CycleOut[Ports_RateGroups.rg1] -> rg1.CycleIn
-      rg1.RateGroupMemberOut[0] -> chanTlm.Run
-      rg1.RateGroupMemberOut[1] -> blinker.run
+      #rg1.RateGroupMemberOut[0] -> chanTlm.Run
+      rg1.RateGroupMemberOut[0] -> blinker.run
     }
 
     connections Uplink {
